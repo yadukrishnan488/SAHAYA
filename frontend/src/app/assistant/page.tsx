@@ -22,13 +22,78 @@ export default function AssistantPage() {
       sender: "bot",
       text:
         language === "ml"
-          ? "നമസ്കാരം! നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താൻ ഞാൻ സഹായിക്കാം. നിങ്ങളുടെ കുടുംബ തരം, തൊഴിൽ, അല്ലെങ്കിൽ മാസവരുമാനം പറയൂ."
-          : "Namaskaram! I can help you discover welfare schemes your family may qualify for. What is your family type, occupation, or monthly income?",
+          ? "നമസ്കാരം! ഞാൻ സഹായ വെൽഫെയർ അസിസ്റ്റന്റാണ്. മത്സ്യത്തൊഴിലാളി, തോട്ടം തൊഴിലാളി കുടുംബങ്ങൾക്കുള്ള പെൻഷനുകൾ, ചികിത്സാ ധനസഹായം, പഠന സഹായം, ഭവന സഹായം എന്നിവയെക്കുറിച്ച് ഏത് ചോദ്യവും ചോദിക്കാം."
+          : "Namaskaram! I am your SAHAYA Welfare Entitlement Assistant. You can ask me any questions regarding pensions, health cover, education stipends, housing repair, or equipment subsidies for fishing and plantation families.",
     },
   ]);
 
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Conversational response generator for ANY user question
+  const generateAssistantReply = (text: string, updatedProfile: typeof profile): string => {
+    const q = text.toLowerCase().trim();
+
+    // 1. Greetings
+    if (q.includes("hi") || q.includes("hello") || q.includes("നമസ്കാരം") || q.includes("ഹലോ")) {
+      return language === "ml"
+        ? "നമസ്കാരം! നിങ്ങളുടെ കുടുംബ തരം (മത്സ്യത്തൊഴിലാളി / തോട്ടം തൊഴിലാളി), മാസവരുമാനം, ജില്ല എന്നിവ പറയൂ. അനുയോജ്യമായ പദ്ധതികൾ ഞാൻ കണ്ടെത്തിത്തരാം."
+        : "Namaskaram! Please tell me your family type (fishing/plantation), monthly income, and district so I can calculate eligible schemes for you.";
+    }
+
+    // 2. Fishing Schemes Questions
+    if (q.includes("fish") || q.includes("മത്സ്യ") || q.includes("കടൽ") || q.includes("വല") || q.includes("ബോട്ട്")) {
+      return language === "ml"
+        ? "മത്സ്യത്തൊഴിലാളി കുടുംബങ്ങൾക്ക് ക്ഷേമ പെൻഷൻ (₹20,000 ൽ താഴെ വരുമാനം), ബോട്ട്/വല സബ്‌സിഡി, മക്കൾക്കുള്ള ഉന്നത വിദ്യാഭ്യാസ ധനസഹായം, ഭവന പുനരുദ്ധാരണ സഹായം എന്നിവ ലഭ്യമാണ്. നിങ്ങളുടെ വരുമാനം അറിയാമോ?"
+        : "For fishing families, schemes include Fisher Welfare Support (income under ₹20,000), Fishing Equipment Subsidies, Children's Education Grants, and Housing Repair Support. What is your monthly income?";
+    }
+
+    // 3. Plantation Schemes Questions
+    if (q.includes("plant") || q.includes("തോട്ടം") || q.includes("എസ്റ്റേറ്റ്") || q.includes("റബ്ബർ") || q.includes("തേയില") || q.includes("ലയം")) {
+      return language === "ml"
+        ? "തോട്ടം/എസ്റ്റേറ്റ് തൊഴിലാളി കുടുംബങ്ങൾക്ക് ലേബർ ക്ഷേമ പെൻഷൻ (₹25,000 ൽ താഴെ വരുമാനം), വൊക്കേഷണൽ പഠന ഗ്രാന്റുകൾ, ലയം/ഭവന അറ്റകുറ്റപ്പണി സഹായം എന്നിവ ലഭിക്കും. നിങ്ങളുടെ വരുമാനം അല്ലെങ്കിൽ വിവരങ്ങൾ പറയൂ."
+        : "For plantation & estate families, schemes cover Plantation Labour Pensions (income under ₹25,000), Student Education Grants, and Quarters/Housing Maintenance Support. What is your family income or district?";
+    }
+
+    // 4. Housing & Repair Questions
+    if (q.includes("വീട്") || q.includes("house") || q.includes("housing") || q.includes("repair") || q.includes("അറ്റകുറ്റപ്പണി")) {
+      return language === "ml"
+        ? "മത്സ്യത്തൊഴിലാളികൾക്കും തോട്ടം തൊഴിലാളികൾക്കും വീട് അറ്റകുറ്റപ്പണിക്കായി സാമ്പത്തിക ധനസഹായം ലഭ്യമാണ്. അപേക്ഷിക്കാൻ റേഷൻ കാർഡ്, വീടിന്റെ നികുതി രസീത്/എസ്റ്റേറ്റ് സർട്ടിഫിക്കറ്റ് ആവശ്യമാണ്."
+        : "Housing Repair assistance is available for coastal fishers and plantation quarter residents. Required documents include Ration Card, House Tax Receipt or Estate Manager Residence Proof.";
+    }
+
+    // 5. Health & Hospital Questions
+    if (q.includes("ആരോഗ്യം") || q.includes("health") || q.includes("hospital") || q.includes("ചികിത്സ") || q.includes("മെഡിക്കൽ")) {
+      return language === "ml"
+        ? "കുറഞ്ഞ വരുമാനമുള്ള (₹20,000 ൽ താഴെ) കുടുംബങ്ങൾക്ക് സൗജന്യ ഇൻപേഷ്യന്റ് ചികിത്സയും ആരോഗ്യ സുരക്ഷാ ധനസഹായവും ലഭ്യമാണ്. താലൂക്ക് ആശുപത്രി കിയോസ്‌ക് വഴി അപേക്ഷിക്കാം."
+        : "Low-income families (income under ₹20,000) qualify for Comprehensive Health Assistance. You can apply directly at Government Taluk Hospital kiosks.";
+    }
+
+    // 6. Documents Questions
+    if (q.includes("രേഖ") || q.includes("doc") || q.includes("card") || q.includes("ആധാർ") || q.includes("പാസ്ബുക്ക്")) {
+      return language === "ml"
+        ? "പ്രധാനമായും ആവശ്യമായ രേഖകൾ: 1. ക്ഷേമനിധി ബോർഡ് പാസ്ബുക്ക് 2. ആധാർ കാർഡ് 3. റേഷൻ കാർഡ് (മുൻഗണനാ കാർഡ്) 4. ബാങ്ക് പാസ്ബുക്ക് 5. വില്ലേജ് വരുമാന സർട്ടിഫിക്കറ്റ്."
+        : "Key required documents include: 1. Welfare Board Passbook 2. Aadhaar Card Copy 3. Priority Ration Card 4. Bank Passbook 5. Income Certificate from Village Officer.";
+    }
+
+    // 7. Where to apply / Centres Questions
+    if (q.includes("എവിടെ") || q.includes("where") || q.includes("apply") || q.includes("സ്ഥലം") || q.includes("ഓഫീസ്") || q.includes("centre")) {
+      return language === "ml"
+        ? "എറണാകുളം ബോട്ട് ജെട്ടിക്ക് സമീപമുള്ള ഫിഷറീസ് ഓഫീസിലോ, കോട്ടയം ലേബർ കോംപ്ലക്സിലോ, ഇടുക്കി സിവിൽ സ്റ്റേഷൻ കൗണ്ടറിലോ, താലൂക്ക് ആശുപത്രി കിയോസ്കുകളിലോ അല്ലെങ്കിൽ അക്ഷയ കേന്ദ്രം വഴിയോ അപേക്ഷിക്കാം."
+        : "You can apply at District Fisheries Offices (Marine Drive Ernakulam), Plantation Labour Inspectorates (Kottayam), Idukki Welfare Counter, or local Akshaya Kendras.";
+    }
+
+    // 8. Parameter follow-up guidance
+    if (updatedProfile.monthlyIncome && updatedProfile.familyType) {
+      return language === "ml"
+        ? `നിങ്ങൾ നൽകിയ വിവരങ്ങൾ സ്വീകരിച്ചു (${updatedProfile.familyType === 'fishing' ? 'മത്സ്യത്തൊഴിലാളി' : 'തോട്ടം തൊഴിലാളി'}, വരുമാനം ₹${updatedProfile.monthlyIncome}). ഈ വിവരങ്ങൾ വെച്ച് സാധ്യതയുള്ള പദ്ധതികൾ കാണാൻ 'ഫലങ്ങൾ കാണുക' ക്ലിക്ക് ചെയ്യുക.`
+        : `Got your profile details (${updatedProfile.familyType}, Income ₹${updatedProfile.monthlyIncome}). Click 'Show Results' to run the deterministic rules engine now.`;
+    }
+
+    return language === "ml"
+      ? "നിങ്ങളുടെ ചോദ്യത്തിന് നന്ദി! കൂടുതൽ വിവരങ്ങൾ നൽകിയാൽ നിങ്ങളുടെ കുടുംബത്തിന് ലഭിക്കാനിടയുള്ള എല്ലാ പദ്ധതികളും കൃത്യമായി കണ്ടെത്തി തരാം."
+      : "Thank you for asking! Please share your monthly income or sector details so I can match all eligible schemes for your household.";
+  };
 
   const processUserInput = async (text: string) => {
     if (!text.trim()) return;
@@ -42,28 +107,7 @@ export default function AssistantPage() {
       const res = await extractVoiceProfile(text, profile);
       setProfile(res.updated_profile);
 
-      let botReply = "";
-      if (language === "ml") {
-        if (!res.updated_profile.monthlyIncome) {
-          botReply = "ശരി. നിങ്ങളുടെ കുടുംബത്തിന്റെ ഏകദേശ മാസവരുമാനം എത്രയാണ്?";
-        } else if (!res.updated_profile.familySize) {
-          botReply = "നിങ്ങളുടെ കുടുംബത്തിൽ എത്ര അംഗങ്ങളുണ്ട്?";
-        } else if (!res.updated_profile.district) {
-          botReply = "നിങ്ങളുടെ ജില്ല ഏതാണ്?";
-        } else {
-          botReply = "നൽകിയ വിവരങ്ങളുടെ അടിസ്ഥാനത്തിൽ അനുയോജ്യമായ പദ്ധതികൾ കണ്ടെത്താനായിട്ടുണ്ട്. ഫലങ്ങൾ കാണാൻ 'ഫലങ്ങൾ കാണുക' ക്ലിക്ക് ചെയ്യുക.";
-        }
-      } else {
-        if (!res.updated_profile.monthlyIncome) {
-          botReply = "Understood. What is your approximate monthly household income?";
-        } else if (!res.updated_profile.familySize) {
-          botReply = "How many members are in your household?";
-        } else if (!res.updated_profile.district) {
-          botReply = "Which district do you reside in?";
-        } else {
-          botReply = "Thank you. Based on the supplied details, potential scheme matches are ready.";
-        }
-      }
+      const botReply = generateAssistantReply(text, res.updated_profile);
 
       setMessages([...newMsgs, { sender: "bot", text: botReply }]);
       speakText(botReply, language);
@@ -164,35 +208,43 @@ export default function AssistantPage() {
 
         {/* Voice & Quick Question Sample Bar */}
         <div className="pt-4 border-t border-slate-100 space-y-4">
-          {/* Quick Voice / Text Prompts */}
+          {/* Quick Sample Questions Bar */}
           <div className="space-y-1.5">
             <p className="text-[11px] font-bold text-slate-500 flex items-center gap-1 justify-center">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>{language === "ml" ? "ഉദാഹരണ ചോദ്യങ്ങൾ (ക്ലിക്ക് ചെയ്യുക):" : "Sample Ask Options (Click to ask):"}</span>
+              <span>{language === "ml" ? "ചോദിക്കാവുന്ന ഉദാഹരണ ചോദ്യങ്ങൾ:" : "Example Questions to Ask:"}</span>
             </p>
             <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold">
               <button
                 type="button"
-                onClick={() => processUserInput(language === "ml" ? "ഞാൻ ഒരു മത്സ്യത്തൊഴിലാളിയാണ്" : "I am a fisherman")}
+                onClick={() => processUserInput(language === "ml" ? "മത്സ്യത്തൊഴിലാളികൾക്ക് എന്തൊക്കെ പദ്ധതികളുണ്ട്?" : "What schemes are available for fishing families?")}
                 className="bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1.5 rounded-xl transition"
               >
-                🎣 {language === "ml" ? "മത്സ്യത്തൊഴിലാളി" : "Fisherman"}
+                🎣 {language === "ml" ? "മത്സ്യബന്ധന പദ്ധതികൾ?" : "Fishing Schemes?"}
               </button>
 
               <button
                 type="button"
-                onClick={() => processUserInput(language === "ml" ? "മാസവരുമാനം 18000 രൂപ" : "Monthly income 18000 rupees")}
+                onClick={() => processUserInput(language === "ml" ? "തോട്ടം തൊഴിലാളികൾക്ക് എന്തൊക്കെ ധനസഹായമുണ്ട്?" : "What support is available for plantation workers?")}
                 className="bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-300 px-3 py-1.5 rounded-xl transition"
               >
-                💰 {language === "ml" ? "വരുമാനം ₹18,000" : "Income ₹18,000"}
+                🌿 {language === "ml" ? "തോട്ടം ആനുകൂല്യങ്ങൾ?" : "Plantation Benefits?"}
               </button>
 
               <button
                 type="button"
-                onClick={() => processUserInput(language === "ml" ? "തോട്ടം തൊഴിലാളി കുടുംബം" : "Plantation worker family")}
+                onClick={() => processUserInput(language === "ml" ? "വീട് അറ്റകുറ്റപ്പണിക്ക് എങ്ങനെ അപേക്ഷിക്കാം?" : "How to apply for housing repair support?")}
                 className="bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-300 px-3 py-1.5 rounded-xl transition"
               >
-                🌿 {language === "ml" ? "തോട്ടം തൊഴിലാളി" : "Plantation Worker"}
+                🏠 {language === "ml" ? "ഭവന പുനരുദ്ധാരണം?" : "Housing Repair?"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => processUserInput(language === "ml" ? "അപേക്ഷിക്കേണ്ട സ്ഥലങ്ങളും ഓഫീസുകളും എവിടെയാണ്?" : "Where are the assistance offices located?")}
+                className="bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 px-3 py-1.5 rounded-xl transition"
+              >
+                📍 {language === "ml" ? "അപേക്ഷാ ഓഫീസുകൾ?" : "Assistance Offices?"}
               </button>
 
               <button
@@ -201,7 +253,7 @@ export default function AssistantPage() {
                 className="bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1.5 rounded-xl transition flex items-center gap-1 font-bold"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                <span>{language === "ml" ? "പദ്ധതികൾ കാണുക" : "Show Results"}</span>
+                <span>{language === "ml" ? "പദ്ധതികൾ പരിശോധിക്കുക" : "Evaluate Schemes"}</span>
               </button>
             </div>
           </div>
@@ -224,8 +276,8 @@ export default function AssistantPage() {
               onChange={(e) => setInputText(e.target.value)}
               placeholder={
                 language === "ml"
-                  ? "ഇവിടെ ചോദ്യങ്ങൾ അല്ലെങ്കിൽ വിവരങ്ങൾ ടൈപ്പ് ചെയ്യുക..."
-                  : "Type your question or household info here..."
+                  ? "ഇവിടെ ഏത് ചോദ്യവും ചോദിക്കുക (ഉദാഹരണത്തിന്: വീട് പുനരുദ്ധാരണ സഹായം എങ്ങനെ ലഭിക്കും)..."
+                  : "Ask any question here (e.g. How to get housing repair assistance)..."
               }
               className="flex-1 p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none text-sm font-medium bg-slate-50"
             />

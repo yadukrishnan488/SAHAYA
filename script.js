@@ -20,7 +20,7 @@ let userProfile = {
 let assistantMessages = [
   {
     sender: 'bot',
-    text: 'നമസ്കാരം! നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താൻ ഞാൻ സഹായിക്കാം. നിങ്ങളുടെ കുടുംബ തരം അല്ലെങ്കിൽ തൊഴിൽ പറയൂ.'
+    text: 'നമസ്കാരം! ഞാൻ സഹായ വെൽഫെയർ അസിസ്റ്റന്റാണ്. മത്സ്യത്തൊഴിലാളി, തോട്ടം തൊഴിലാളി കുടുംബങ്ങൾക്കുള്ള പെൻഷനുകൾ, ചികിത്സാ ധനസഹായം, പഠന സഹായം, ഭവന സഹായം എന്നിവയെക്കുറിച്ച് ഏത് ചോദ്യവും ചോദിക്കാം.'
   }
 ];
 
@@ -169,18 +169,20 @@ function renderAssistant() {
   container.scrollTop = container.scrollHeight;
 }
 
-// Send Assistant Message
+// Send Assistant Message & Answer ANY user question
 function sendAssistantMsg(text) {
   if (!text || !text.trim()) return;
 
   assistantMessages.push({ sender: 'user', text });
   renderAssistant();
 
-  const lower = text.toLowerCase();
-  if (lower.includes('fish') || lower.includes('മത്സ്യ')) {
+  const lower = text.toLowerCase().trim();
+
+  // Extract parameters
+  if (lower.includes('fish') || lower.includes('മത്സ്യ') || lower.includes('കടൽ')) {
     userProfile.familyType = 'fishing';
     userProfile.occupation = 'fishing';
-  } else if (lower.includes('plant') || lower.includes('തോട്ടം')) {
+  } else if (lower.includes('plant') || lower.includes('തോട്ടം') || lower.includes('എസ്റ്റേറ്റ്') || lower.includes('റബ്ബർ') || lower.includes('തേയില')) {
     userProfile.familyType = 'plantation';
     userProfile.occupation = 'plantation worker';
   }
@@ -192,9 +194,37 @@ function sendAssistantMsg(text) {
     userProfile.monthlyIncome = val;
   }
 
-  let reply = currentLang === 'ml'
-    ? 'നൽകിയ വിവരങ്ങൾ സ്വീകരിച്ചു! കൂടുതൽ വിവരങ്ങൾ താഴെ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ ഫലങ്ങൾ കാണുക.'
-    : 'Information received! Click Show Results to evaluate your potential schemes.';
+  // Conversational response matching intent
+  let reply = "";
+  if (lower.includes("hi") || lower.includes("hello") || lower.includes("നമസ്കാരം") || lower.includes("ഹലോ")) {
+    reply = currentLang === 'ml'
+      ? "നമസ്കാരം! നിങ്ങളുടെ കുടുംബ തരം (മത്സ്യത്തൊഴിലാളി / തോട്ടം തൊഴിലാളി), മാസവരുമാനം, ജില്ല എന്നിവ പറയൂ."
+      : "Namaskaram! Please share your family type (fishing/plantation) and monthly income.";
+  } else if (lower.includes("fish") || lower.includes("മത്സ്യ") || lower.includes("വല")) {
+    reply = currentLang === 'ml'
+      ? "മത്സ്യത്തൊഴിലാളി കുടുംബങ്ങൾക്ക് ക്ഷേമ പെൻഷൻ, ബോട്ട്/വല സബ്‌സിഡി, മക്കളുടെ പഠന സഹായം എന്നിവ ലഭിക്കും. മാസവരുമാനം എത്രയാണ്?"
+      : "For fishing families, schemes include Fisher Welfare Support (income under ₹20,000), Equipment Subsidies, and Education Grants.";
+  } else if (lower.includes("plant") || lower.includes("തോട്ടം") || lower.includes("എസ്റ്റേറ്റ്")) {
+    reply = currentLang === 'ml'
+      ? "തോട്ടം തൊഴിലാളി കുടുംബങ്ങൾക്ക് ലേബർ ക്ഷേമ പെൻഷൻ (₹25,000 ൽ താഴെ), വൊക്കേഷണൽ പഠന ഗ്രാന്റുകൾ, ഭവന സഹായം എന്നിവ ലഭ്യമാണ്."
+      : "For plantation families, schemes cover Labour Pensions (income under ₹25,000), Student Grants, and Housing Repair Support.";
+  } else if (lower.includes("വീട്") || lower.includes("house") || lower.includes("housing") || lower.includes("repair")) {
+    reply = currentLang === 'ml'
+      ? "മത്സ്യത്തൊഴിലാളികൾക്കും തോട്ടം തൊഴിലാളികൾക്കും വീട് അറ്റകുറ്റപ്പണിക്കായി സാമ്പത്തിക ധനസഹായം ലഭ്യമാണ്. റേഷൻ കാർഡും ഭവന രേഖയും വേണം."
+      : "Housing Repair assistance is available for fishers and plantation workers with Ration Card and house proof.";
+  } else if (lower.includes("രേഖ") || lower.includes("doc") || lower.includes("ആധാർ")) {
+    reply = currentLang === 'ml'
+      ? "ആവശ്യമായ രേഖകൾ: ക്ഷേമനിധി ബോർഡ് പാസ്ബുക്ക്, ആധാർ കാർഡ്, റേഷൻ കാർഡ്, ബാങ്ക് പാസ്ബുക്ക്, വരുമാന സർട്ടിഫിക്കറ്റ്."
+      : "Key required documents: Welfare Board Passbook, Aadhaar Card, Ration Card, Bank Passbook, Income Certificate.";
+  } else if (lower.includes("എവിടെ") || lower.includes("where") || lower.includes("apply") || lower.includes("സ്ഥലം")) {
+    reply = currentLang === 'ml'
+      ? "എറണാകുളം/കോട്ടയം/ഇടുക്കി ലേബർ & ഫിഷറീസ് ഓഫീസുകളിലോ അല്ലെങ്കിൽ പ്രാദേശിക അക്ഷയ കേന്ദ്രം വഴിയോ അപേക്ഷിക്കാം."
+      : "You can apply at District Fisheries Offices, Plantation Labour Inspectorates, or local Akshaya Kendras.";
+  } else {
+    reply = currentLang === 'ml'
+      ? `വിവരങ്ങൾ ശേഖരിച്ചു (കുടുംബം: ${userProfile.familyType}, വരുമാനം: ₹${userProfile.monthlyIncome}). അനുയോജ്യമായ പദ്ധതികൾ കാണാൻ 'Show Results' ക്ലിക്ക് ചെയ്യുക.`
+      : `Profile updated (${userProfile.familyType}, Income ₹${userProfile.monthlyIncome}). Click 'Show Results' to calculate eligible schemes.`;
+  }
 
   setTimeout(() => {
     assistantMessages.push({ sender: 'bot', text: reply });
