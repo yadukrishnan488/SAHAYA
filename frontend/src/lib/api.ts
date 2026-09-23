@@ -49,21 +49,65 @@ export async function extractVoiceProfile(user_input: string, current_profile: H
     if (!res.ok) throw new Error("AI extract failed");
     return await res.json();
   } catch (err) {
-    // Basic local fallback extraction
-    const lower = user_input.toLowerCase();
+    // Robust client-side Malayalam / English NLU parameter extraction fallback
+    const lower = user_input.toLowerCase().trim();
     const updated = { ...current_profile };
-    if (lower.includes("fish") || lower.includes("മത്സ്യ")) {
+    const extracted: Record<string, any> = {};
+
+    // 1. Sector / Occupation
+    if (lower.includes("fish") || lower.includes("മത്സ്യ") || lower.includes("കടൽ")) {
       updated.familyType = "fishing";
       updated.occupation = "fishing";
-    } else if (lower.includes("plant") || lower.includes("തോട്ടം")) {
+      extracted["familyType"] = "fishing";
+    } else if (lower.includes("plant") || lower.includes("തോട്ടം") || lower.includes("എസ്റ്റേറ്റ്") || lower.includes("റബ്ബർ") || lower.includes("തേയില")) {
       updated.familyType = "plantation";
       updated.occupation = "plantation worker";
+      extracted["familyType"] = "plantation";
     }
+
+    // 2. Income parsing
+    const numbers = lower.match(/\d+/g);
+    if (numbers && numbers.length > 0) {
+      let num = parseInt(numbers[0]);
+      if (num < 100) num = num * 1000;
+      if (num >= 5000 && num <= 100000) {
+        updated.monthlyIncome = num;
+        extracted["monthlyIncome"] = num;
+      }
+    }
+
+    if (lower.includes("10000") || lower.includes("പതിനായിരം")) {
+      updated.monthlyIncome = 10000;
+    } else if (lower.includes("18000") || lower.includes("പതിനെട്ടായിരം")) {
+      updated.monthlyIncome = 18000;
+    } else if (lower.includes("20000") || lower.includes("ഇരുപതായിരം")) {
+      updated.monthlyIncome = 20000;
+    } else if (lower.includes("25000") || lower.includes("ഇരുപത്തഞ്ചായിരം")) {
+      updated.monthlyIncome = 25000;
+    }
+
+    // 3. District detection
+    const districtsMap: Record<string, string> = {
+      "ernakulam": "Ernakulam", "എറണാകുളം": "Ernakulam",
+      "kottayam": "Kottayam", "കോട്ടയം": "Kottayam",
+      "idukki": "Idukki", "ഇടുക്കി": "Idukki",
+      "alappuzha": "Alappuzha", "ആലപ്പുഴ": "Alappuzha",
+      "wayanad": "Wayanad", "വയനാട്": "Wayanad"
+    };
+
+    for (const [key, dist] of Object.entries(districtsMap)) {
+      if (lower.includes(key)) {
+        updated.district = dist;
+        extracted["district"] = dist;
+        break;
+      }
+    }
+
     return {
-      extracted_fields: updated,
+      extracted_fields: extracted,
       updated_profile: updated,
-      confirmation_message_en: "Details updated",
-      confirmation_message_ml: "വിവരങ്ങൾ പുതുക്കി"
+      confirmation_message_en: "Information processed.",
+      confirmation_message_ml: "വിവരങ്ങൾ ശേഖരിച്ചു."
     };
   }
 }
@@ -80,9 +124,8 @@ export async function runTestProfiles(): Promise<TestProfileRunResult[]> {
   }
 }
 
-// Fallback client-side evaluator if backend server is starting
+// Fallback client-side evaluator
 function fallbackEvaluate(profile: HouseholdProfile): ScreeningResultOverview {
-  // Simple fallback simulation matching expected rules
   const isFishing = profile.familyType === "fishing";
   const isPlantation = profile.familyType === "plantation";
   const income = profile.monthlyIncome ?? 999999;
