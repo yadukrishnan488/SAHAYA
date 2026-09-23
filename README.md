@@ -1,62 +1,53 @@
 # SAHAYA – Welfare Entitlement Assistant
 
-> Multilingual Welfare Entitlement Assistant for Plantation and Fishing Families
+**SAHAYA** is a multilingual, accessible, rules-driven web application designed to help plantation and fishing families discover government welfare schemes they potentially qualify for.
 
-SAHAYA is an accessible, multilingual web application built for hackathon demonstration. It helps coastal fishing households and hill plantation worker families discover government welfare schemes they potentially qualify for using a **100% deterministic rules engine**, Malayalam/English voice interaction, interactive assistance centre mapping, and printable document checklists.
+> **Hackathon Notice**: This prototype uses clearly marked DEMO scheme rules and demo application centre data. The deterministic engine architecture allows verified government scheme resource packs to be imported without modifying core logic.
 
 ---
 
 ## 🌟 Key Features
 
-- **Deterministic Rules Engine**: Python rules engine evaluating profile conditions without LLM hallucinations. Categorizes schemes into `POTENTIALLY_ELIGIBLE`, `MORE_INFORMATION_NEEDED`, and `NOT_MATCHED`.
-- **Multilingual UI**: Native support for **Malayalam (മലയാളം)** and **English** with real-time toggle.
-- **Voice & Accessibility**: Web Speech API integration (`ml-IN` speech recognition) with audio TTS question reader and text fallback.
-- **Why This Result**: Expandable rule match breakdown displaying matched rules, missing fields, or failed conditions for complete transparency.
-- **12 Demo Schemes**: Pre-loaded realistic demo schemes with architecture ready for importing official organizer resource packs.
-- **Printable Document Checklist**: Aggregated document checklist with printable view.
-- **Interactive Help Centres Map**: OpenStreetMap Leaflet visualizer displaying Kerala welfare assistance centres (Ernakulam, Kottayam, Idukki, Alappuzha, Wayanad).
-- **Admin Dashboard & Test Profiles**: Real-time metrics dashboard, automated test runner, and JSON resource pack importer.
-- **Hackathon Judge Shortcuts**: 1-click fast-load profile presets.
+- **Multilingual Support**: Full UI available in **Malayalam (മലയാളം)** and **English** with real-time toggle.
+- **Sector Screening**: Tailored screening wizards for **Fishing Families 🎣** and **Plantation Families 🌿**.
+- **Single-Question Wizard**: Step-by-step screening with progress indicators, audio question read-aloud (TTS), Web Speech API voice input (`ml-IN`), and manual text fallback.
+- **Deterministic Rules Engine**: 100% rules-driven evaluation (`POTENTIALLY_ELIGIBLE`, `MORE_INFORMATION_NEEDED`, `NOT_MATCHED`). AI/LLM is strictly restricted to language extraction and explanation rendering.
+- **"Why Am I Seeing This?"**: Transparent match breakdown displaying matched rules, missing parameters, or failed criteria derived directly from engine outputs.
+- **Printable Document Checklist**: Aggregated document checklist with checkboxes and print support.
+- **Interactive Help Centres Map**: OpenStreetMap + Leaflet interactive map displaying Kerala welfare assistance locations with district filters.
+- **Voice Assistant**: Malayalam/English conversational voice assistant collecting missing household fields.
+- **Administrator Dashboard**: System metrics, test profile runner (100% PASS rate), and JSON/CSV resource pack importer.
+- **Hackathon Judge Shortcuts**: One-click sample profile loaders on the home page for fast evaluation.
 
 ---
 
-## 🏗️ Architecture Stack
-
-- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, Lucide Icons, Leaflet OpenStreetMap.
-- **Backend**: FastAPI, Python 3.12, Pydantic v2, SQLAlchemy (SQLite / PostgreSQL fallback).
-- **Rules Engine**: Deterministic Python rule evaluator (`app/rules_engine.py`).
-
----
-
-## 🚀 Quick Start Guide
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- Python 3.10+
+- Node.js (v18+)
+- Python (v3.10+)
 
-### 1. Setup & Start Backend (FastAPI)
-
+### 1. Backend Setup (FastAPI)
 ```bash
 cd backend
 python -m venv venv
-# On Windows PowerShell:
-.\venv\Scripts\Activate.ps1
+# On Windows:
+venv\Scripts\activate
 # On Linux/macOS:
 source venv/bin/activate
 
 pip install -r requirements.txt
-python main.py
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
-Backend API server will run at `http://localhost:8000` (API docs at `http://localhost:8000/docs`).
+Backend API server runs at `http://localhost:8000` (API docs at `http://localhost:8000/docs`).
 
-### 2. Setup & Start Frontend (Next.js)
-
+### 2. Frontend Setup (Next.js)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend web application will run at `http://localhost:3000`.
+Frontend application runs at `http://localhost:3000`.
 
 ---
 
@@ -66,24 +57,25 @@ Frontend web application will run at `http://localhost:3000`.
 sahaya/
 ├── backend/
 │   ├── app/
-│   │   ├── rules_engine.py   # Deterministic rules evaluator
-│   │   ├── ai_service.py     # NLU parameter extraction layer
-│   │   ├── seed_data.py      # 12 demo schemes & centres
-│   │   ├── schemas.py        # Pydantic models
-│   │   └── routers/          # API endpoints
-│   ├── tests/                # Pytest unit tests
-│   ├── main.py               # FastAPI entry point
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── app/              # Next.js pages (start, questions, results, centres, docs, admin)
-│   │   ├── components/       # Navbar, Footer, VoiceMicButton, LeafletMap
-│   │   └── lib/              # dictionary.ts (en/ml), speech.ts, api.ts, context.tsx
-│   └── package.json
-└── README.md
+│   │   ├── routers/       # API routes (screening, schemes, centres, ai, admin)
+│   │   ├── config.py      # Environment configuration
+│   │   ├── rules_engine.py# Deterministic rules evaluation engine
+│   │   ├── ai_service.py  # NLU parameter extractor & explanation layer
+│   │   ├── schemas.py     # Pydantic data models
+│   │   └── seed_data.py   # 12 demo schemes & Kerala application centres
+│   ├── tests/             # Pytest unit tests for rules engine
+│   ├── main.py            # FastAPI entry point
+│   └── requirements.txt   # Python dependencies
+└── frontend/
+    ├── src/
+    │   ├── app/           # Next.js App Router pages (/, /start, /questions, /results, /scheme/[id], /documents, /centres, /assistant, /admin)
+    │   ├── components/    # Navbar, Footer, VoiceMicButton, LeafletMap
+    │   └── lib/           # Types, Dictionary (Malayalam/English), Speech API, API client, Context
+    ├── public/            # Static assets
+    └── package.json       # Node dependencies
 ```
 
 ---
 
-## 📜 License
-Developed for Hackathon Demonstration.
+## 📄 License
+This project is built for hackathon demonstration.
