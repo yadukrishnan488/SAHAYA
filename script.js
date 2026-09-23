@@ -17,6 +17,13 @@ let userProfile = {
   occupationDocument: true
 };
 
+let assistantMessages = [
+  {
+    sender: 'bot',
+    text: 'നമസ്കാരം! നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താൻ ഞാൻ സഹായിക്കാം. നിങ്ങളുടെ കുടുംബ തരം അല്ലെങ്കിൽ തൊഴിൽ പറയൂ.'
+  }
+];
+
 // 12 Demo Schemes Data
 const DEMO_SCHEMES = [
   {
@@ -100,6 +107,7 @@ function showSection(secId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  if (secId === 'assistant') renderAssistant();
   if (secId === 'questions') renderQuestion();
   if (secId === 'results') runRulesEngine();
   if (secId === 'documents') renderDocuments();
@@ -140,6 +148,59 @@ function selectFamilyType(type) {
   userProfile.occupation = type === 'fishing' ? 'fishing' : 'plantation worker';
   currentStep = 1;
   showSection('questions');
+}
+
+// Render Assistant Chat Messages
+function renderAssistant() {
+  const container = document.getElementById('assistant-chat-log');
+  if (!container) return;
+
+  container.innerHTML = assistantMessages.map(m => `
+    <div class="flex items-start gap-3 ${m.sender === 'user' ? 'flex-row-reverse' : ''}">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${m.sender === 'user' ? 'bg-slate-900 text-white' : 'bg-emerald-100 text-emerald-800'}">
+        ${m.sender === 'user' ? '👤' : '🤖'}
+      </div>
+      <div class="p-3.5 rounded-2xl max-w-md text-xs leading-relaxed shadow-sm ${m.sender === 'user' ? 'bg-emerald-600 text-white font-semibold rounded-tr-none' : 'bg-slate-100 text-slate-900 font-medium rounded-tl-none border border-slate-200'}">
+        <p>${m.text}</p>
+      </div>
+    </div>
+  `).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+// Send Assistant Message
+function sendAssistantMsg(text) {
+  if (!text || !text.trim()) return;
+
+  assistantMessages.push({ sender: 'user', text });
+  renderAssistant();
+
+  const lower = text.toLowerCase();
+  if (lower.includes('fish') || lower.includes('മത്സ്യ')) {
+    userProfile.familyType = 'fishing';
+    userProfile.occupation = 'fishing';
+  } else if (lower.includes('plant') || lower.includes('തോട്ടം')) {
+    userProfile.familyType = 'plantation';
+    userProfile.occupation = 'plantation worker';
+  }
+
+  const numMatch = lower.match(/\d+/);
+  if (numMatch) {
+    let val = parseInt(numMatch[0]);
+    if (val < 100) val *= 1000;
+    userProfile.monthlyIncome = val;
+  }
+
+  let reply = currentLang === 'ml'
+    ? 'നൽകിയ വിവരങ്ങൾ സ്വീകരിച്ചു! കൂടുതൽ വിവരങ്ങൾ താഴെ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ ഫലങ്ങൾ കാണുക.'
+    : 'Information received! Click Show Results to evaluate your potential schemes.';
+
+  setTimeout(() => {
+    assistantMessages.push({ sender: 'bot', text: reply });
+    renderAssistant();
+    speakText(reply);
+  }, 400);
 }
 
 // Questions Wizard Render
@@ -353,31 +414,33 @@ function runAdminTests() {
 }
 
 // Speech Recognition & TTS
-function speakCurrentQuestion() {
+function speakText(text) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const msg = new SpeechSynthesisUtterance(
-      currentLang === 'ml'
-        ? "നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താം. വിവരങ്ങൾ നൽകുക."
-        : "What is your family type or primary occupation?"
-    );
+    const msg = new SpeechSynthesisUtterance(text);
     msg.lang = currentLang === 'ml' ? "ml-IN" : "en-IN";
     msg.rate = 0.9;
     window.speechSynthesis.speak(msg);
   }
 }
 
+function speakCurrentQuestion() {
+  speakText(
+    currentLang === 'ml'
+      ? "നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താം. വിവരങ്ങൾ നൽകുക."
+      : "What is your family type or primary occupation?"
+  );
+}
+
 async function toggleMic() {
   const btn = document.getElementById('mic-btn');
-  if (!btn) return;
 
-  // 1. Try requesting browser microphone permission first
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(t => t.stop());
     } catch (e) {
-      alert("Microphone permission denied. Please click the lock icon in your browser URL bar to allow microphone access, or click sample voice buttons.");
+      alert("Microphone permission denied. Please allow microphone access in your browser settings.");
       return;
     }
   }
@@ -391,34 +454,33 @@ async function toggleMic() {
       rec.continuous = false;
       rec.interimResults = false;
 
-      btn.innerHTML = '🔴 <span>Listening...</span>';
+      if (btn) btn.innerHTML = '🔴 <span>Listening...</span>';
 
       rec.onresult = (e) => {
         const text = e.results[0][0].transcript;
-        btn.innerHTML = '🎤 <span>Speak</span>';
-        alert((currentLang === 'ml' ? 'ശബ്ദം തിരിച്ചറിഞ്ഞു: ' : 'Voice Recognized: ') + `"${text}"`);
+        if (btn) btn.innerHTML = '🎤 <span>Speak</span>';
+        sendAssistantMsg(text);
       };
 
       rec.onerror = (e) => {
-        btn.innerHTML = '🎤 <span>Speak</span>';
+        if (btn) btn.innerHTML = '🎤 <span>Speak</span>';
         alert("Speech Recognition Notice: " + (e.error || 'Please speak clearly'));
       };
 
       rec.onend = () => {
-        btn.innerHTML = '🎤 <span>Speak</span>';
+        if (btn) btn.innerHTML = '🎤 <span>Speak</span>';
       };
 
       rec.start();
     } catch (err) {
-      btn.innerHTML = '🎤 <span>Speak</span>';
+      if (btn) btn.innerHTML = '🎤 <span>Speak</span>';
       alert("Voice Error: " + err.message);
     }
   } else {
-    // Fallback simulation if browser doesn't support Web Speech Recognition
-    btn.innerHTML = '🔴 <span>Listening...</span>';
+    if (btn) btn.innerHTML = '🔴 <span>Listening...</span>';
     setTimeout(() => {
-      btn.innerHTML = '🎤 <span>Speak</span>';
-      alert(currentLang === 'ml' ? 'ശബ്ദം തിരിച്ചറിഞ്ഞു: "ഞാൻ ഒരു മത്സ്യത്തൊഴിലാളിയാണ്"' : 'Voice Recognized: "I am a fisherman"');
+      if (btn) btn.innerHTML = '🎤 <span>Speak</span>';
+      sendAssistantMsg(currentLang === 'ml' ? "ഞാൻ ഒരു മത്സ്യത്തൊഴിലാളിയാണ്" : "I am a fisherman");
     }, 1500);
   }
 }
@@ -434,3 +496,4 @@ window.loadJudgeDemo = loadJudgeDemo;
 window.runAdminTests = runAdminTests;
 window.speakCurrentQuestion = speakCurrentQuestion;
 window.toggleMic = toggleMic;
+window.sendAssistantMsg = sendAssistantMsg;

@@ -50,6 +50,7 @@
       <nav class="hidden md:flex items-center gap-2 text-sm font-semibold text-slate-700">
         <button onclick="showSection('home')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Home</button>
         <button onclick="showSection('start')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Start Screening</button>
+        <button onclick="showSection('assistant')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Voice Assistant</button>
         <button onclick="showSection('documents')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Document Checklist</button>
         <button onclick="showSection('centres')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Help Centres</button>
         <button onclick="showSection('admin')" class="px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 transition">Admin Dashboard</button>
@@ -153,7 +154,57 @@
       </div>
     </section>
 
-    <!-- 3. QUESTIONS WIZARD SECTION -->
+    <!-- 3. ASSISTANT SECTION (FIXED FOR GITHUB DEMO) -->
+    <section id="sec-assistant" class="hidden max-w-3xl mx-auto space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+            🤖
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold text-slate-900">SAHAYA Voice & Text Assistant</h1>
+            <p class="text-xs text-slate-500">Ask questions or speak your household details to discover welfare schemes.</p>
+          </div>
+        </div>
+        <button onclick="showSection('results')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1">
+          <span>Show Results</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col justify-between space-y-4">
+        <div id="assistant-chat-log" class="space-y-4 max-h-[450px] overflow-y-auto pr-2">
+          <!-- Chat messages rendered dynamically -->
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 space-y-3">
+          <div class="flex flex-wrap justify-center gap-2 text-xs font-semibold">
+            <button onclick="sendAssistantMsg('ഞാൻ ഒരു മത്സ്യത്തൊഴിലാളിയാണ്')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1.5 rounded-xl">
+              🎣 മത്സ്യത്തൊഴിലാളി (Fisherman)
+            </button>
+            <button onclick="sendAssistantMsg('മാസവരുമാനം 18000 രൂപ')" class="bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-300 px-3 py-1.5 rounded-xl">
+              💰 வருമാനം ₹18,000
+            </button>
+            <button onclick="sendAssistantMsg('തോട്ടം തൊഴിലാളി കുടുംബം')" class="bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-300 px-3 py-1.5 rounded-xl">
+              🌿 തോട്ടം തൊഴിലാളി (Plantation)
+            </button>
+          </div>
+
+          <div class="flex justify-center">
+            <button onclick="toggleMic()" id="mic-btn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md">
+              🎤 <span>Speak</span>
+            </button>
+          </div>
+
+          <form onsubmit="event.preventDefault(); const inp=document.getElementById('ast-input'); sendAssistantMsg(inp.value); inp.value=''; return false;" class="flex items-center gap-2">
+            <input type="text" id="ast-input" placeholder="Type your question here (e.g. I am a fisherman)..." class="flex-1 p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none text-sm font-medium bg-slate-50" />
+            <button type="submit" class="p-3.5 bg-emerald-600 text-white rounded-2xl font-bold shadow-md hover:bg-emerald-700">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. QUESTIONS WIZARD SECTION -->
     <section id="sec-questions" class="hidden max-w-2xl mx-auto space-y-6">
       <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
         <div class="flex items-center justify-between text-sm font-bold text-slate-700">
@@ -171,7 +222,7 @@
             <i data-lucide="volume-2" class="w-4 h-4 text-emerald-600"></i>
             <span>Listen</span>
           </button>
-          <button onclick="toggleMic()" id="mic-btn" class="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 px-3 py-1.5 rounded-xl">
+          <button onclick="toggleMic()" class="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 px-3 py-1.5 rounded-xl">
             🎤 <span>Speak</span>
           </button>
         </div>
@@ -187,7 +238,7 @@
       </div>
     </section>
 
-    <!-- 4. RESULTS SECTION -->
+    <!-- 5. RESULTS SECTION -->
     <section id="sec-results" class="hidden space-y-6">
       <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
         <h1 class="text-2xl font-extrabold text-slate-900">Your Screening Results</h1>
@@ -214,7 +265,7 @@
       </div>
     </section>
 
-    <!-- 5. DOCUMENTS SECTION -->
+    <!-- 6. DOCUMENTS SECTION -->
     <section id="sec-documents" class="hidden max-w-3xl mx-auto space-y-6">
       <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
@@ -231,7 +282,7 @@
       </div>
     </section>
 
-    <!-- 6. CENTRES SECTION -->
+    <!-- 7. CENTRES SECTION -->
     <section id="sec-centres" class="hidden space-y-6">
       <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
         <h1 class="text-2xl font-extrabold text-slate-900">Application Assistance Centres</h1>
@@ -245,7 +296,7 @@
       </div>
     </section>
 
-    <!-- 7. ADMIN SECTION -->
+    <!-- 8. ADMIN SECTION -->
     <section id="sec-admin" class="hidden space-y-6">
       <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
@@ -293,7 +344,6 @@
   <!-- SAHAYA Custom JavaScript Engine -->
   <script src="script.js"></script>
   <script>
-    // Initialize Lucide Icons after DOM load
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) {
         window.lucide.createIcons();
