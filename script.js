@@ -1,6 +1,6 @@
 /**
  * SAHAYA - Welfare Entitlement Assistant
- * JavaScript Engine Module for Multilingual Screening, Deterministic Rules, and Maps
+ * JavaScript Engine Module for Multilingual Screening, Deterministic Rules, and Speech API
  */
 
 // Application State
@@ -116,7 +116,6 @@ function setLang(lang) {
     btnEn.className = lang === 'en' ? "px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-sm" : "px-2.5 py-1 rounded-md text-xs font-bold text-slate-700";
   }
 
-  // Update dynamic elements
   const title = document.getElementById('hero-title');
   if (title) {
     title.innerText = lang === 'ml' 
@@ -357,20 +356,70 @@ function runAdminTests() {
 function speakCurrentQuestion() {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const msg = new SpeechSynthesisUtterance("What is your family type or primary occupation?");
+    const msg = new SpeechSynthesisUtterance(
+      currentLang === 'ml'
+        ? "നിങ്ങളുടെ കുടുംബത്തിന് അനുയോജ്യമായ ക്ഷേമ പദ്ധതികൾ കണ്ടെത്താം. വിവരങ്ങൾ നൽകുക."
+        : "What is your family type or primary occupation?"
+    );
     msg.lang = currentLang === 'ml' ? "ml-IN" : "en-IN";
+    msg.rate = 0.9;
     window.speechSynthesis.speak(msg);
   }
 }
 
-function toggleMic() {
+async function toggleMic() {
   const btn = document.getElementById('mic-btn');
-  if (btn) {
+  if (!btn) return;
+
+  // 1. Try requesting browser microphone permission first
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      alert("Microphone permission denied. Please click the lock icon in your browser URL bar to allow microphone access, or click sample voice buttons.");
+      return;
+    }
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    try {
+      const rec = new SpeechRecognition();
+      rec.lang = currentLang === 'ml' ? 'ml-IN' : 'en-IN';
+      rec.continuous = false;
+      rec.interimResults = false;
+
+      btn.innerHTML = '🔴 <span>Listening...</span>';
+
+      rec.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        btn.innerHTML = '🎤 <span>Speak</span>';
+        alert((currentLang === 'ml' ? 'ശബ്ദം തിരിച്ചറിഞ്ഞു: ' : 'Voice Recognized: ') + `"${text}"`);
+      };
+
+      rec.onerror = (e) => {
+        btn.innerHTML = '🎤 <span>Speak</span>';
+        alert("Speech Recognition Notice: " + (e.error || 'Please speak clearly'));
+      };
+
+      rec.onend = () => {
+        btn.innerHTML = '🎤 <span>Speak</span>';
+      };
+
+      rec.start();
+    } catch (err) {
+      btn.innerHTML = '🎤 <span>Speak</span>';
+      alert("Voice Error: " + err.message);
+    }
+  } else {
+    // Fallback simulation if browser doesn't support Web Speech Recognition
     btn.innerHTML = '🔴 <span>Listening...</span>';
     setTimeout(() => {
       btn.innerHTML = '🎤 <span>Speak</span>';
       alert(currentLang === 'ml' ? 'ശബ്ദം തിരിച്ചറിഞ്ഞു: "ഞാൻ ഒരു മത്സ്യത്തൊഴിലാളിയാണ്"' : 'Voice Recognized: "I am a fisherman"');
-    }, 2000);
+    }, 1500);
   }
 }
 

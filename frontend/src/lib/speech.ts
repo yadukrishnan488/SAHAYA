@@ -6,17 +6,33 @@ export interface SpeechRecognitionResultHandler {
   onEnd: () => void;
 }
 
-export function startSpeechRecognition(
+export async function startSpeechRecognition(
   language: "ml" | "en",
   handlers: SpeechRecognitionResultHandler
-): { stop: () => void } | null {
+): Promise<{ stop: () => void } | null> {
   if (typeof window === "undefined") return null;
+
+  // 1. Request microphone permission explicitly via getUserMedia first
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately after permission is granted
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (err: any) {
+      handlers.onError(
+        "Microphone access blocked. Please click the microphone lock icon in your browser URL bar to allow microphone permission."
+      );
+      handlers.onEnd();
+      return null;
+    }
+  }
 
   const SpeechRecognition =
     (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     handlers.onError("Speech recognition is not supported in this browser. Please type your response.");
+    handlers.onEnd();
     return null;
   }
 
@@ -32,7 +48,15 @@ export function startSpeechRecognition(
     };
 
     recognition.onerror = (event: any) => {
-      handlers.onError(event.error || "Speech recognition error");
+      let friendlyError = event.error || "Speech recognition error";
+      if (event.error === "not-allowed") {
+        friendlyError = "Microphone permission denied. Please allow microphone access in your browser settings.";
+      } else if (event.error === "no-speech") {
+        friendlyError = "No speech detected. Please speak clearly into your microphone.";
+      } else if (event.error === "audio-capture") {
+        friendlyError = "No microphone found. Please check your audio hardware.";
+      }
+      handlers.onError(friendlyError);
     };
 
     recognition.onend = () => {
@@ -48,10 +72,11 @@ export function startSpeechRecognition(
         } catch (e) {
           // ignore
         }
-      }
+      },
     };
   } catch (err: any) {
-    handlers.onError(err.message || "Failed to initialize speech recognition");
+    handlers.onError(err.message || "Failed to initialize speech recognition.");
+    handlers.onEnd();
     return null;
   }
 }
@@ -63,11 +88,10 @@ export function speakText(text: string, language: "ml" | "en" = "ml") {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = language === "ml" ? "ml-IN" : "en-IN";
-    utterance.rate = 0.9; // Slightly slower for clear government guidance
+    utterance.rate = 0.9;
 
-    // Try finding a Malayalam voice if available
     const voices = window.speechSynthesis.getVoices();
-    const targetVoice = voices.find(v => v.lang.includes(language === "ml" ? "ml" : "en"));
+    const targetVoice = voices.find((v) => v.lang.includes(language === "ml" ? "ml" : "en"));
     if (targetVoice) {
       utterance.voice = targetVoice;
     }
