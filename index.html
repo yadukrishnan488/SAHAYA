@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SAHAYA – Welfare Entitlement Assistant</title>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -11,25 +12,22 @@
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap');
-    body {
-      font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
-    }
-  </style>
+
+  <!-- SAHAYA Custom CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased">
 
   <!-- Header Banner -->
   <div class="bg-emerald-950 text-white px-4 py-1.5 text-xs font-medium flex items-center justify-between">
-    <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+    <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="bg-emerald-500 text-emerald-950 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">
           DEMO MODE
         </span>
         <span id="banner-text">Demo scheme information is used for this hackathon prototype.</span>
       </div>
-      <span class="text-[11px] text-emerald-300 font-semibold hidden sm:inline">Standalone Interactive HTML Demo</span>
+      <span class="text-[11px] text-emerald-300 font-semibold hidden sm:inline">Standalone Interactive Web Preview</span>
     </div>
   </div>
 
@@ -292,242 +290,15 @@
     </div>
   </footer>
 
-  <!-- Embedded JS Logic -->
+  <!-- SAHAYA Custom JavaScript Engine -->
+  <script src="script.js"></script>
   <script>
-    // State
-    let currentLang = 'ml';
-    let isEasyMode = false;
-    let currentStep = 1;
-    let userProfile = {
-      familyType: 'fishing',
-      occupation: 'fishing',
-      monthlyIncome: 18000,
-      familySize: 4,
-      district: 'Ernakulam',
-      welfareRegistration: true,
-      occupationDocument: true
-    };
-
-    // Demo Data Schemes
-    const DEMO_SCHEMES = [
-      { id: "DEMO-FISH-001", name: "Demo Fisher Welfare Support", name_ml: "ഡെമോ മത്സ്യത്തൊഴിലാളി ക്ഷേമ പെൻഷൻ/സഹായം", targetGroup: "fishing", rules: [{field:"familyType", op:"eq", val:"fishing"}, {field:"monthlyIncome", op:"lte", val:20000}, {field:"welfareRegistration", op:"eq", val:true}], docs: ["Fishermen Welfare Board Passbook", "Aadhaar Card copy", "Bank Passbook"], loc: "District Fisheries Office Ernakulam" },
-      { id: "DEMO-FISH-002", name: "Demo Fishing Equipment Subsidized Assistance", name_ml: "ഡെമോ മത്സ്യബന്ധന ഉപകരണ സബ്‌സിഡി പദ്ധതി", targetGroup: "fishing", rules: [{field:"occupation", op:"eq", val:"fishing"}, {field:"occupationDocument", op:"eq", val:true}], docs: ["Fisheries Worker ID Card", "Equipment Invoice"], loc: "Coastal Assistance Office" },
-      { id: "DEMO-PLANT-001", name: "Demo Plantation Worker Welfare Pension", name_ml: "ഡെമോ തോട്ടം തൊഴിലാളി ക്ഷേമ പെൻഷൻ പദ്ധതി", targetGroup: "plantation", rules: [{field:"familyType", op:"eq", val:"plantation"}, {field:"monthlyIncome", op:"lte", val:25000}, {field:"welfareRegistration", op:"eq", val:true}], docs: ["Plantation Labour Welfare Fund Passbook", "Estate Certificate"], loc: "Inspectorate of Plantations Kottayam" },
-      { id: "DEMO-PLANT-002", name: "Demo Plantation Worker Education Grant", name_ml: "ഡെമോ തോട്ടം തൊഴിലാളി മക്കളുടെ പഠന ഗ്രാന്റ്", targetGroup: "plantation", rules: [{field:"occupation", op:"eq", val:"plantation worker"}, {field:"occupationDocument", op:"eq", val:true}], docs: ["Estate Worker Identity Card", "Student Fee Receipt"], loc: "Estate Labour Counter" },
-      { id: "DEMO-GEN-001", name: "Demo Comprehensive Family Health Assistance", name_ml: "ഡെമോ കുടുംബ ആരോഗ്യ സുരക്ഷാ ധനസഹായ പദ്ധതി", targetGroup: "both", rules: [{field:"monthlyIncome", op:"lte", val:20000}], docs: ["Ration Card (Priority)", "Aadhaar Card"], loc: "Government Taluk Hospital Kiosk" }
-    ];
-
-    const DEMO_CENTRES = [
-      { id: "1", name: "Fisheries Assistance Centre Ernakulam", district: "Ernakulam", lat: 9.9723, lng: 76.2778, phone: "+91 484 2351234" },
-      { id: "2", name: "Plantation Worker Centre Kottayam", district: "Kottayam", lat: 9.5916, lng: 76.5222, phone: "+91 481 2567890" },
-      { id: "3", name: "Welfare Assistance Centre Idukki", district: "Idukki", lat: 9.8500, lng: 76.9667, phone: "+91 486 2234567" }
-    ];
-
-    // Navigation Helper
-    function showSection(secId) {
-      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
-      document.getElementById(`sec-${secId}`).classList.remove('hidden');
-      if (secId === 'questions') renderQuestion();
-      if (secId === 'results') runRulesEngine();
-      if (secId === 'documents') renderDocuments();
-      if (secId === 'centres') initMap();
-    }
-
-    function setLang(lang) {
-      currentLang = lang;
-      document.getElementById('lang-ml').className = lang === 'ml' ? "px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-sm" : "px-2.5 py-1 rounded-md text-xs font-bold text-slate-700";
-      document.getElementById('lang-en').className = lang === 'en' ? "px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-sm" : "px-2.5 py-1 rounded-md text-xs font-bold text-slate-700";
-    }
-
-    function toggleEasyMode() {
-      isEasyMode = !isEasyMode;
-      document.body.classList.toggle('text-lg', isEasyMode);
-      alert(isEasyMode ? "Easy Mode Enabled" : "Standard Mode Enabled");
-    }
-
-    function selectFamilyType(type) {
-      userProfile.familyType = type;
-      userProfile.occupation = type === 'fishing' ? 'fishing' : 'plantation worker';
-      currentStep = 1;
-      showSection('questions');
-    }
-
-    function renderQuestion() {
-      const container = document.getElementById('q-container');
-      const pct = Math.round((currentStep / 7) * 100);
-      document.getElementById('q-progress-text').innerText = `Question ${currentStep} of 7`;
-      document.getElementById('q-progress-pct').innerText = `${pct}%`;
-      document.getElementById('q-progress-bar').style.width = `${pct}%`;
-
-      if (currentStep === 1) {
-        container.innerHTML = `
-          <h3 class="font-bold text-lg">What is your family type?</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <button onclick="userProfile.familyType='fishing'; renderQuestion();" class="p-4 rounded-xl border ${userProfile.familyType==='fishing'?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">🎣 Fishing Family</button>
-            <button onclick="userProfile.familyType='plantation'; renderQuestion();" class="p-4 rounded-xl border ${userProfile.familyType==='plantation'?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">🌿 Plantation Family</button>
-          </div>
-        `;
-      } else if (currentStep === 2) {
-        container.innerHTML = `
-          <h3 class="font-bold text-lg">What is your main occupation?</h3>
-          <div class="grid grid-cols-3 gap-3">
-            <button onclick="userProfile.occupation='fishing'; renderQuestion();" class="p-4 rounded-xl border ${userProfile.occupation==='fishing'?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">🎣 Fishing</button>
-            <button onclick="userProfile.occupation='plantation worker'; renderQuestion();" class="p-4 rounded-xl border ${userProfile.occupation==='plantation worker'?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">🌿 Plantation Worker</button>
-            <button onclick="userProfile.occupation='other'; renderQuestion();" class="p-4 rounded-xl border ${userProfile.occupation==='other'?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">🛠️ Other</button>
-          </div>
-        `;
-      } else if (currentStep === 3) {
-        container.innerHTML = `
-          <h3 class="font-bold text-lg">Approximate monthly household income?</h3>
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="userProfile.monthlyIncome=8000; renderQuestion();" class="p-4 rounded-xl border ${userProfile.monthlyIncome===8000?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">Below ₹10,000</button>
-            <button onclick="userProfile.monthlyIncome=18000; renderQuestion();" class="p-4 rounded-xl border ${userProfile.monthlyIncome===18000?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">₹10,000 – ₹20,000</button>
-            <button onclick="userProfile.monthlyIncome=25000; renderQuestion();" class="p-4 rounded-xl border ${userProfile.monthlyIncome===25000?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">₹20,000 – ₹30,000</button>
-            <button onclick="userProfile.monthlyIncome=35000; renderQuestion();" class="p-4 rounded-xl border ${userProfile.monthlyIncome===35000?'border-emerald-600 bg-emerald-50':'border-slate-200'} font-bold">Above ₹30,000</button>
-          </div>
-        `;
-      } else {
-        container.innerHTML = `<h3 class="font-bold text-lg">Step ${currentStep} completed. Click Next to proceed.</h3>`;
+    // Initialize Lucide Icons after DOM load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
       }
-    }
-
-    function nextQuestion() {
-      if (currentStep < 7) {
-        currentStep++;
-        renderQuestion();
-      } else {
-        showSection('results');
-      }
-    }
-
-    function prevQuestion() {
-      if (currentStep > 1) {
-        currentStep--;
-        renderQuestion();
-      } else {
-        showSection('start');
-      }
-    }
-
-    // Deterministic Rules Engine
-    function runRulesEngine() {
-      let eligible = 0, moreInfo = 0, notMatched = 0;
-      const resultsContainer = document.getElementById('results-list');
-      resultsContainer.innerHTML = '';
-
-      DEMO_SCHEMES.forEach(scheme => {
-        let isEligible = true;
-        let matchedRules = [];
-        let failedRules = [];
-
-        scheme.rules.forEach(rule => {
-          const userVal = userProfile[rule.field];
-          if (userVal === undefined || userVal === null) {
-            isEligible = false;
-          } else if (rule.op === 'eq' && userVal !== rule.val) {
-            isEligible = false;
-            failedRules.push(`${rule.field} mismatch`);
-          } else if (rule.op === 'lte' && userVal > rule.val) {
-            isEligible = false;
-            failedRules.push(`Income ₹${userVal} exceeds ₹${rule.val}`);
-          } else {
-            matchedRules.push(`${rule.field} matched`);
-          }
-        });
-
-        if (isEligible) {
-          eligible++;
-        } else {
-          notMatched++;
-        }
-
-        const badge = isEligible
-          ? `<span class="bg-emerald-100 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full">🟢 POTENTIALLY ELIGIBLE</span>`
-          : `<span class="bg-rose-100 text-rose-900 text-xs font-bold px-3 py-1 rounded-full">🔴 NOT MATCHED</span>`;
-
-        const card = document.createElement('div');
-        card.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3";
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-base text-slate-900">${currentLang === 'ml' ? scheme.name_ml : scheme.name}</h3>
-            ${badge}
-          </div>
-          <div class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl space-y-1">
-            <p class="font-bold text-emerald-800">Why this result?</p>
-            <p>✓ Matched conditions: ${matchedRules.length} conditions satisfied.</p>
-          </div>
-        `;
-        resultsContainer.appendChild(card);
-      });
-
-      document.getElementById('res-eligible-count').innerText = eligible;
-      document.getElementById('res-moreinfo-count').innerText = moreInfo;
-      document.getElementById('res-notmatched-count').innerText = notMatched;
-    }
-
-    function renderDocuments() {
-      const list = document.getElementById('docs-list');
-      const docs = ["Fishermen Welfare Board Passbook", "Plantation Labour Welfare Fund Passbook", "Aadhaar Card Copy", "Priority Ration Card", "Bank Passbook"];
-      list.innerHTML = docs.map(d => `<li class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold flex items-center gap-2"><input type="checkbox" checked /> ${d}</li>`).join('');
-    }
-
-    function initMap() {
-      setTimeout(() => {
-        const mapContainer = document.getElementById('map');
-        if (mapContainer._leaflet_id) return; // already init
-        const map = L.map('map').setView([10.0, 76.5], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        DEMO_CENTRES.forEach(c => {
-          L.marker([c.lat, c.lng]).addTo(map)
-            .bindPopup(`<b>${c.name}</b><br>Phone: ${c.phone}`);
-        });
-
-        const list = document.getElementById('centres-list');
-        list.innerHTML = DEMO_CENTRES.map(c => `
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
-            <h4 class="font-bold text-sm text-slate-900">${c.name}</h4>
-            <p class="text-xs text-slate-500">📞 ${c.phone}</p>
-          </div>
-        `).join('');
-      }, 100);
-    }
-
-    function loadJudgeDemo(type) {
-      if (type === 'fishing') {
-        userProfile = { familyType: 'fishing', occupation: 'fishing', monthlyIncome: 18000, familySize: 4, district: 'Ernakulam', welfareRegistration: true, occupationDocument: true };
-      } else if (type === 'plantation') {
-        userProfile = { familyType: 'plantation', occupation: 'plantation worker', monthlyIncome: 15000, familySize: 5, district: 'Kottayam', welfareRegistration: true, occupationDocument: true };
-      }
-      showSection('results');
-    }
-
-    function runAdminTests() {
-      const log = document.getElementById('admin-test-log');
-      document.getElementById('admin-test-results').classList.remove('hidden');
-      log.innerHTML = `
-        <div class="p-2 bg-emerald-50 text-emerald-900 rounded border border-emerald-200">✅ TEST-001: Fishing Family Standard Profile -> PASS (7 matched)</div>
-        <div class="p-2 bg-emerald-50 text-emerald-900 rounded border border-emerald-200">✅ TEST-002: Plantation Family Standard Profile -> PASS (8 matched)</div>
-        <div class="p-2 bg-emerald-50 text-emerald-900 rounded border border-emerald-200">✅ TEST-003: Incomplete Profile -> PASS (More Info Triggered)</div>
-      `;
-    }
-
-    function speakCurrentQuestion() {
-      if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance("What is your family type or occupation?");
-        msg.lang = "en-IN";
-        window.speechSynthesis.speak(msg);
-      }
-    }
-
-    function toggleMic() {
-      alert("Microphone listening... Speak in Malayalam or English.");
-    }
-
-    // Initialize Lucide Icons
-    lucide.createIcons();
+    });
   </script>
 </body>
 </html>
