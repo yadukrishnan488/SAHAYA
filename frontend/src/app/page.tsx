@@ -1,17 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { Search, HelpCircle, FileText, Mic, ShieldAlert, ArrowRight, Anchor, Trees, CheckCircle2, Zap } from "lucide-react";
+import { VoiceMicButton } from "@/components/VoiceMicButton";
+import { extractVoiceProfile, checkEligibility } from "@/lib/api";
+import { Search, HelpCircle, FileText, Mic, ShieldAlert, ArrowRight, Anchor, Trees, Zap } from "lucide-react";
 
 export default function HomePage() {
-  const { t, language, easyMode, loadJudgeDemo } = useApp();
+  const { t, language, easyMode, loadJudgeDemo, profile, setProfile, setResults } = useApp();
   const router = useRouter();
+  const [voiceExtractedText, setVoiceExtractedText] = useState("");
 
   const handleDemoClick = async (type: "fishing" | "plantation" | "incomplete") => {
     await loadJudgeDemo(type);
+    router.push("/results");
+  };
+
+  const handleHeroVoiceInput = async (transcript: string) => {
+    setVoiceExtractedText(transcript);
+    const extracted = await extractVoiceProfile(transcript, profile);
+    setProfile(extracted.updated_profile);
+    const res = await checkEligibility(extracted.updated_profile);
+    setResults(res);
     router.push("/results");
   };
 
@@ -51,12 +63,15 @@ export default function HomePage() {
               <ArrowRight className="w-5 h-5" />
             </Link>
 
+            <div className="bg-white/10 backdrop-blur border border-white/20 p-1.5 rounded-2xl">
+              <VoiceMicButton onTranscript={handleHeroVoiceInput} label={t.askByVoice} />
+            </div>
+
             <Link
               href="/assistant"
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3.5 rounded-2xl font-semibold text-base backdrop-blur transition-all"
+              className="inline-flex items-center gap-2 text-xs text-emerald-200 hover:text-white underline underline-offset-4"
             >
-              <Mic className="w-5 h-5 text-emerald-300" />
-              <span>{t.askByVoice}</span>
+              <span>Or open full assistant →</span>
             </Link>
           </div>
         </div>
